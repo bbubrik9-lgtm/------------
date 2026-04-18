@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GFlow Sell</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-green: #32D74B;
+            --bg: #ffffff;
+            --secondary: #86868b;
+            --tab-bg: #f5f5f7;
+            --apple-bezier: cubic-bezier(0.8, 0, 0.1, 1);
+            --header-h: 70px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #000; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+        /* Лоадер */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2000; display: flex; align-items: center; justify-content: center;
+        }
+        .slime-wrapper {
+            filter: blur(20px) contrast(30);
+            background: #000; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            transition: opacity 1s ease;
+        }
+        .slime-ball { width: 120px; height: 120px; background: #fff; border-radius: 50%; position: absolute; }
+        .ball-1 { animation: move-1 1.6s forwards ease-in-out; }
+        .ball-2 { animation: move-2 1.6s forwards ease-in-out; }
+
+        @keyframes move-1 { 0% { transform: translateX(-150%) scale(1); } 45% { transform: translateX(0) scale(1.4); } 100% { transform: translateX(0) scale(50); } }
+        @keyframes move-2 { 0% { transform: translateX(150%) scale(1); } 45% { transform: translateX(0) scale(1.4); } 100% { transform: translateX(0) scale(50); } }
+
+        .loader-text {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            font-size: 58px; font-weight: 800; letter-spacing: -1px; z-index: 2001;
+            opacity: 0; white-space: nowrap; color: #000;
+            transform-origin: left center;
+            transition:
+                opacity 0.6s ease-out,
+                transform 1.4s var(--apple-bezier),
+                top 1.4s var(--apple-bezier),
+                left 1.4s var(--apple-bezier);
+            pointer-events: none;
+        }
+
+        .loader-text.show {
+            opacity: 1; transform: translate(-50%, -50%) scale(1);
+            background: linear-gradient(to bottom, #000 0%, #888 40%, #000 70%, #fff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .loader-text.fly {
+            top: calc(var(--header-h) / 2 + env(safe-area-inset-top, 0px));
+            left: 25px;
+            transform: translate(0, -50%) scale(0.448);
+            -webkit-text-fill-color: #000; opacity: 1;
+        }
+
+        #main-content { opacity: 0; transform: scale(0.99); transition: opacity 1.2s ease, transform 1.2s var(--apple-bezier); }
+        #main-content.visible { opacity: 1; transform: scale(1); }
+
+        header {
+            padding: env(safe-area-inset-top, 0px) 25px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); z-index: 100;
+            height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+        }
+        .logo { font-size: 26px; font-weight: 800; letter-spacing: -1px; opacity: 0; transform-origin: left center; }
+        .order-btn { text-decoration: none; color: #000; font-size: 14px; font-weight: 600; padding: 10px 18px; background: var(--tab-bg); border-radius: 20px; }
+
+        .hero { padding: 40px 25px 15px; text-align: left; max-width: 500px; margin: 0 auto; }
+        .hero h1 {
+            font-size: 42px; font-weight: 800; letter-spacing: -2px; margin-bottom: 10px;
+            background: linear-gradient(120deg, #000 40%, #444 50%, #000 60%);
+            background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shine 5s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+        .hero p { color: var(--secondary); font-size: 17px; font-weight: 500; line-height: 1.2; max-width: 250px; }
+
+        .tabs-container { padding: 15px 25px; max-width: 500px; margin: 0 auto; position: sticky; top: calc(var(--header-h) + env(safe-area-inset-top, 0px)); background: #fff; z-index: 90; }
+        .tabs { display: flex; background: var(--tab-bg); padding: 4px; border-radius: 16px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; background: transparent; transition: 0.2s; }
+        .tab-btn.active { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+        .grid { padding: 10px 25px 40px; display: flex; flex-direction: column; gap: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: #fff; border-radius: 38px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.02); border: 1px solid #f2f2f7; overflow: hidden; }
+
+        .card-gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        .card-gallery::-webkit-scrollbar { display: none; }
+        .card-img { flex: 0 0 100%; scroll-snap-align: start; width: 100%; height: 260px; object-fit: cover; border-radius: 28px; background: var(--tab-bg); }
+
+        .card-title { font-size: 26px; font-weight: 700; margin: 18px 0 6px; padding: 0 5px; }
+        .card-price { font-size: 20px; font-weight: 500; color: var(--secondary); margin-bottom: 14px; padding: 0 5px; }
+        .card-specs { color: var(--secondary); font-size: 14px; margin-bottom: 20px; padding: 0 5px; line-height: 1.4; min-height: 40px; }
+
+        .buy-now { display: block; width: 100%; background: #000; color: #fff; text-align: center; padding: 18px; border-radius: 22px; font-weight: 600; text-decoration: none; transition: transform 0.1s; }
+        .buy-now:active { transform: scale(0.97); }
+
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .channel-info { text-align: center; max-width: 400px; margin: 0 auto; padding: 20px 25px 60px; }
+        .qr-box { background: #fff; padding: 25px; border-radius: 35px; display: inline-block; box-shadow: 0 15px 40px rgba(0,0,0,0.06); border: 1px solid #f2f2f7; margin-bottom: 30px; }
+        .qr-box img { width: 180px; height: 180px; display: block; border-radius: 10px; }
+
+        .benefits-card { background: #fff; padding: 30px; border-radius: 38px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f2f2f7; text-align: left; margin-bottom: 30px; }
+        .benefit-item { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 20px; font-size: 15px; line-height: 1.5; font-weight: 500; }
+        .benefit-item:last-child { margin-bottom: 0; }
+        .benefit-dot { min-width: 8px; height: 8px; background: var(--apple-green); border-radius: 50%; margin-top: 7px; }
+
+        footer { padding: 40px 25px calc(60px + env(safe-area-inset-bottom)); text-align: center; border-top: 1px solid #f2f2f7; }
+    </style>
+</head>
+<body>
+    <div id="loader">
+        <div class="slime-wrapper">
+            <div class="slime-ball ball-1"></div>
+            <div class="slime-ball ball-2"></div>
+        </div>
+        <div class="loader-text" id="loader-text">GFlow Sell</div>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <div class="logo" id="header-logo">GFlow Sell</div>
+            <a href="https://t.me/GadgetFlowstore" class="order-btn">Заказать</a>
+        </header>
+
+        <div class="hero">
+            <h1>GFlow Sell</h1>
+            <p>Эстетика б/у устройств в новом прочтении.</p>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(event, 'shop')">Витрина</button>
+                <button class="tab-btn" onclick="switchTab(event, 'channel')">О канале</button>
+            </div>
+        </div>
+
+        <div id="shop" class="section active">
+            <div class="grid" id="products-grid">
+                <p style="text-align:center; color:var(--secondary); padding: 40px;">Загрузка коллекции...</p>
+            </div>
+        </div>
+
+        <div id="channel" class="section">
+            <div class="channel-info">
+                <div class="qr-box">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/GadgetFlowstore&bgcolor=ffffff" alt="QR Code">
+                    <p style="margin-top: 15px; font-size: 13px; color: var(--secondary); font-weight: 700; letter-spacing: 1px;">GADGETFLOW STORE</p>
+                </div>
+
+                <div class="benefits-card">
+                    <div class="benefit-item"><div class="benefit-dot"></div>Идеальное состояние устройств, полные комплекты с коробками.</div>
+                    <div class="benefit-item"><div class="benefit-dot"></div>Цены гарантированно ниже рыночных на 2.000-3.000₽.</div>
+                    <div class="benefit-item"><div class="benefit-dot"></div>Честная проверка, сброс и фотоотчет перед каждой отправкой.</div>
+                    <div class="benefit-item"><div class="benefit-dot"></div>Безопасная доставка: Авито, СДЭК, Почта России (без рисков).</div>
+                    <div class="benefit-item"><div class="benefit-dot"></div>Прозрачная оплата через Авито (для Apple — индивидуально).</div>
+                </div>
+
+                <a href="https://t.me/GadgetFlowstore" class="buy-now" style="background:var(--apple-green); box-shadow: 0 10px 20px rgba(50, 215, 75, 0.2);">Перейти в Telegram</a>
+            </div>
+        </div>
+
+        <footer>
+            <p style="font-weight:700; font-size: 14px;">@GFlowstore</p>
+            <p style="color:var(--secondary); font-size: 12px; margin-top: 4px;">GFlow Store © 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        const SHEET_ID = '1_S411u8p480jE1r9p-u6S8m7R_P2I9H3k';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&cache=${Date.now()}`;
+
+        async function init() {
+            const lText = document.getElementById('loader-text');
+            const loader = document.getElementById('loader');
+            const content = document.getElementById('main-content');
+            const hLogo = document.getElementById('header-logo');
+            const slime = document.querySelector('.slime-wrapper');
+
+            // 1. Показываем текст ровно когда центр белый (1.1с)
+            setTimeout(() => { lText.classList.add('show'); }, 1100);
+
+            // 2. Начинаем полет (2.3с)
+            setTimeout(() => {
+                lText.classList.add('fly');
+                slime.style.opacity = '0';
+                loader.style.background = 'transparent';
+                content.classList.add('visible');
+            }, 2300);
+
+            // 3. Бесшовная подмена в хедере (3.6с)
+            setTimeout(() => {
+                hLogo.style.opacity = '1';
+                lText.style.opacity = '0';
+            }, 3600);
+
+            // 4. Удаляем лоадер (4.2с)
+            setTimeout(() => { loader.style.display = 'none'; }, 4200);
+
+            try {
+                const res = await fetch(CSV_URL);
+                const data = await res.text();
+                const rows = data.split('\n').slice(1);
+                const grid = document.getElementById('products-grid');
+                grid.innerHTML = '';
+
+                rows.forEach((row) => {
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if(cols.length >= 3) {
+                        const p = {
+                            name: cols[0].replace(/"/g, "").trim(),
+                            desc: cols[1].replace(/"/g, "").trim(),
+                            price: cols[2].replace(/"/g, "").trim(),
+                            images: cols[3] ? cols[3].replace(/"/g, "").trim().split(',') : []
+                        };
+                        let imagesHtml = '';
+                        if (p.images.length > 0) {
+                            imagesHtml = `<div class="card-gallery">` +
+                                p.images.map(url => `<img src="${url.trim()}" class="card-img" loading="lazy">`).join('') +
+                                `</div>`;
+                        }
+                        const specs = p.desc.split('\n')[0].replace(/,/g, ' • ');
+                        grid.innerHTML += `
+                            <div class="card">
+                                ${imagesHtml}
+                                <div class="card-title">${p.name}</div>
+                                <div class="card-price">${p.price}</div>
+                                <div class="card-specs">${specs}</div>
+                                <a href="https://t.me/GadgetFlowstore" class="buy-now">Заказать</a>
+                            </div>`;
+                    }
+                });
+            } catch(e) { grid.innerHTML = '<p style="text-align:center; padding: 20px;">Ошибка загрузки коллекции</p>'; }
+        }
+
+        function switchTab(e, id) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            document.getElementById(id).classList.add('active');
+        }
+
+        init();
+    </script>
+</body>
+</html>
