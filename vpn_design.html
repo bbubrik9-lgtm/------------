@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowVPN - Твой безопасный интернет</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f5ff;
+            --primary-dark: #00c8d4;
+            --secondary: #7b2fff;
+            --accent: #ff00e6;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(20, 20, 35, 0.6);
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Анимированный фон */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-gradient {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-gradient:nth-child(1) {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .bg-gradient:nth-child(2) {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            bottom: -200px;
+            right: -200px;
+            animation-delay: -7s;
+        }
+
+        .bg-gradient:nth-child(3) {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -50px) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(40px, 20px) scale(1.05); }
+        }
+
+        /* Сетка на фоне */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Навигация */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.5);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 245, 255, 0.3);
+            letter-spacing: -1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .btn-connect {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 30px;
+            color: #000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-connect::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-connect:hover::before {
+            left: 100%;
+        }
+
+        .btn-connect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.5);
+        }
+
+        /* Hero секция */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 100px 50px;
+            min-height: 80vh;
+            gap: 50px;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .hero h1 {
+            font-size: 64px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 30px;
+            color: #000;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 50px rgba(0, 245, 255, 0.6);
+        }
+
+        .btn-secondary {
+            padding: 16px 40px;
+            background: var(--glass);
+            border: 2px solid var(--glass-border);
+            border-radius: 30px;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        /* 3D Globe Animation */
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .globe-container {
+            width: 400px;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateGlobe 20s linear infinite;
+        }
+
+        @keyframes rotateGlobe {
+            0% { transform: rotateY(0deg) rotateX(10deg); }
+            100% { transform: rotateY(360deg) rotateX(10deg); }
+        }
+
+        .globe-ring {
+            position: absolute;
+            border: 2px solid rgba(0, 245, 255, 0.3);
+            border-radius: 50%;
+            transform-style: preserve-3d;
+        }
+
+        .globe-ring:nth-child(1) {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform: rotateY(0deg);
+            animation: ringRotate1 8s linear infinite reverse;
+        }
+
+        .globe-ring:nth-child(2) {
+            width: 90%;
+            height: 90%;
+            top: 5%;
+            left: 5%;
+            transform: rotateY(60deg);
+            animation: ringRotate2 10s linear infinite;
+        }
+
+        .globe-ring:nth-child(3) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            transform: rotateY(120deg);
+            animation: ringRotate3 12s linear infinite reverse;
+        }
+
+        @keyframes ringRotate1 { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+        @keyframes ringRotate2 { 0% { transform: rotateY(60deg); } 100% { transform: rotateY(420deg); } }
+        @keyframes ringRotate3 { 0% { transform: rotateY(120deg); } 100% { transform: rotateY(480deg); } }
+
+        .globe-core {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle at 30% 30%, var(--primary), var(--secondary), transparent);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 
+                0 0 60px rgba(0, 245, 255, 0.5),
+                inset 0 0 60px rgba(123, 47, 255, 0.3);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+        }
+
+        .connection-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--accent);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 50px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 60px;
+            letter-spacing: -1px;
+        }
+
+        .section-title span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+            border-color: var(--primary);
+            box-shadow: 0 20px 60px rgba(0, 245, 255, 0.2);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 245, 255, 0.3);
+            transform: translateZ(20px);
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            transform: translateZ(10px);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            transform: translateZ(10px);
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 50px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 50px 40px;
+            backdrop-filter: blur(20px);
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            box-shadow: 0 0 60px rgba(0, 245, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::before {
+            content: 'ПОПУЛЯРНЫЙ';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 8px 25px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .pricing-card.popular:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+
+        .plan-price span {
+            font-size: 18px;
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 40px;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 50px;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+            background: rgba(10, 10, 15, 0.5);
+        }
+
+        .footer-logo {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .copyright {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                flex-direction: column;
+                padding: 60px 20px;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .globe-container {
+                width: 280px;
+                height: 280px;
+            }
+
+            .globe-core {
+                width: 140px;
+                height: 140px;
+            }
+
+            .features, .pricing {
+                padding: 60px 20px;
+            }
+
+            .section-title {
+                font-size: 36px;
+            }
+
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+
+            .pricing-card.popular:hover {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-animation">
+        <div class="bg-gradient"></div>
+        <div class="bg-gradient"></div>
+        <div class="bg-gradient"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">ShadowVPN</div>
+        <div class="nav-links">
+            <a href="#features">Преимущества</a>
+            <a href="#pricing">Тарифы</a>
+            <a href="#about">О нас</a>
+        </div>
+        <button class="btn-connect">Подключить</button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Свободный интернет без <span>границ</span></h1>
+            <p>Молниеносная скорость, военное шифрование и полная анонимность. Подключись к ShadowVPN и получи доступ к контенту по всему миру.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary">Начать бесплатно</button>
+                <button class="btn-secondary">Узнать больше</button>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="globe-container">
+                <div class="globe-ring"></div>
+                <div class="globe-ring"></div>
+                <div class="globe-ring"></div>
+                <div class="globe-core"></div>
+                <div class="connection-point" style="top: 20%; left: 30%;"></div>
+                <div class="connection-point" style="top: 40%; left: 70%; animation-delay: 0.5s;"></div>
+                <div class="connection-point" style="top: 70%; left: 40%; animation-delay: 1s;"></div>
+                <div class="connection-point" style="top: 60%; left: 20%; animation-delay: 1.5s;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2 class="section-title fade-in">Почему <span>ShadowVPN</span>?</h2>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🚀</div>
+                <h3>Молниеносная скорость</h3>
+                <p>Наши серверы оптимизированы для максимальной производительности. Смотрите 4K видео и играйте без задержек.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔒</div>
+                <h3>Военное шифрование</h3>
+                <p>AES-256 шифрование защищает ваши данные лучше, чем банковские системы безопасности.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🌍</div>
+                <h3>50+ стран мира</h3>
+                <p>Доступ к серверам по всему миру. Меняйте локацию в один клик и обходите любые ограничения.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">👻</div>
+                <h3>Полная анонимность</h3>
+                <p>Мы не храним логи вашей активности. Ваша приватность — наш главный приоритет.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📱</div>
+                <h3>Все устройства</h3>
+                <p>Одна подписка работает на всех ваших устройствах: телефон, планшет, компьютер, Smart TV.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎧</div>
+                <h3>Поддержка 24/7</h3>
+                <p>Наша команда экспертов готова помочь вам в любое время суток через чат или email.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <h2 class="section-title fade-in">Выберите <span>тариф</span></h2>
+        <div class="pricing-grid">
+            <div class="pricing-card fade-in">
+                <div class="plan-name">Старт</div>
+                <div class="plan-price">299₽<span>/мес</span></div>
+                <ul class="plan-features">
+                    <li>5 устройств</li>
+                    <li>20+ стран</li>
+                    <li>Средняя скорость</li>
+                    <li>Базовая поддержка</li>
+                    <li>Без рекламы</li>
+                </ul>
+                <button class="btn-secondary" style="width: 100%;">Выбрать</button>
+            </div>
+            <div class="pricing-card popular fade-in">
+                <div class="plan-name">Профи</div>
+                <div class="plan-price">599₽<span>/мес</span></div>
+                <ul class="plan-features">
+                    <li>10 устройств</li>
+                    <li>50+ стран</li>
+                    <li>Максимальная скорость</li>
+                    <li>Приоритетная поддержка</li>
+                    <li>Выделенные IP</li>
+                    <li>P2P торренты</li>
+                </ul>
+                <button class="btn-primary" style="width: 100%;">Выбрать</button>
+            </div>
+            <div class="pricing-card fade-in">
+                <div class="plan-name">Год</div>
+                <div class="plan-price">2990₽<span>/год</span></div>
+                <ul class="plan-features">
+                    <li>Безлимит устройств</li>
+                    <li>Все 50+ стран</li>
+                    <li>Максимальная скорость</li>
+                    <li>VIP поддержка 24/7</li>
+                    <li>Выделенные IP</li>
+                    <li>Экономия 58%</li>
+                </ul>
+                <button class="btn-secondary" style="width: 100%;">Выбрать</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-logo">ShadowVPN</div>
+        <p class="copyright">© 2026 ShadowVPN. Все права защищены. Безопасность и приватность превыше всего.</p>
+    </footer>
+
+    <script>
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Button hover effects with parallax
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 20;
+                const rotateY = (centerX - x) / 20;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+            });
+        });
+
+        // Connect button animation
+        document.querySelector('.btn-connect').addEventListener('click', function() {
+            this.textContent = 'Подключение...';
+            setTimeout(() => {
+                this.textContent = '✓ Подключено';
+                this.style.background = 'linear-gradient(135deg, #32D74B, #00f5ff)';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
