@@ -1,0 +1,5 @@
+[gd_resource type="Shape3D" load_steps=2 format=3 uid="uid://capsule_shape"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.5
+height = 1.8
