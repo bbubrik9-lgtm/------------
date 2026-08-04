@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<scn3 version="1.0" gen_offset="0">
+<node name="Main" type="Node3D">
+	<node name="World" type="Node3D">
+		<node name="SunLight" type="DirectionalLight3D">
+			<transform>
+				<basis x="-0.707107 0 -0.707107" y="0 1 0" z="0.707107 0 -0.707107" />
+				<origin x="0" y="50" z="0" />
+			</transform>
+			<property name="shadow_enabled" value="true" />
+			<property name="light_color" value="1, 0.95, 0.9, 1" />
+			<property name="light_energy" value="2.5" />
+		</node>
+		<node name="Environment" type="Environment">
+			<property name="ambient_light_source" value="2" />
+			<property name="background_mode" value="1" />
+			<property name="bg_color" value="0, 0, 0, 1" />
+			<property name="glow_enabled" value="true" />
+			<property name="glow_intensity" value="0.8" />
+		</node>
+		<node name="UniverseRoot" type="Node3D">
+			<script resource="local://UniverseVisualizer.gd" />
+		</node>
+		<node name="Player" type="CharacterBody3D" groups="[&quot;player&quot;]">
+			<transform>
+				<origin x="0" y="0" z="20" />
+			</transform>
+			<node name="CollisionShape3D" type="CollisionShape3D">
+				<property name="shape" resource="local://capsule_shape" />
+			</node>
+			<node name="CameraPivot" type="Node3D">
+				<node name="Camera3D" type="Camera3D">
+					<property name="fov" value="90" />
+				</node>
+			</node>
+			<node name="GrabRaycast" type="RayCast3D">
+				<property name="target_position" value="0, 0, -2.5" />
+				<property name="collision_mask" value="64" />
+			</node>
+			<script resource="local://PlayerController.gd" />
+		</node>
+		<node name="CameraSystem" type="Node3D">
+			<script resource="local://DualCameraController.gd">
+				<property name="near_camera" value="NodePath(&quot;../Player/CameraPivot/Camera3D&quot;)" />
+			</script>
+		</node>
+	</node>
+</node>
+</scn3>
